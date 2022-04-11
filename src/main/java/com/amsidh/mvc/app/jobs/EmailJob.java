@@ -1,4 +1,4 @@
-package com.amsidh.mvc.SpringBootEmailQuartzScheduler.job.EmailJob;
+package com.amsidh.mvc.app.jobs;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

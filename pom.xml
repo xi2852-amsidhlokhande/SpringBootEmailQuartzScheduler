@@ -9,9 +9,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.amsidh.mvc</groupId>
-    <artifactId>SpringBootEmailQuartzScheduler</artifactId>
+    <artifactId>SpringBootQuartzScheduler</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>SpringBootEmailQuartzScheduler</name>
+    <name>SpringBootQuartzScheduler</name>
     <description>SpringBoot Quartz Scheduler to send Email</description>
     <properties>
         <java.version>11</java.version>

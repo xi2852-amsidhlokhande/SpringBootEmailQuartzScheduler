@@ -1,4 +1,4 @@
-package com.amsidh.mvc.SpringBootEmailQuartzScheduler.payload;
+package com.amsidh.mvc.app.payload;
 
 import com.sun.istack.NotNull;
 import lombok.Data;
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 @Data
-public class EmailRequest {
+public class JobRequest {
 
     @Email
     @NotEmpty

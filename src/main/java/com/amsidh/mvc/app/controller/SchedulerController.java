@@ -1,17 +1,10 @@
-package com.amsidh.mvc.SpringBootEmailQuartzScheduler.controller;
+package com.amsidh.mvc.app.controller;
 
-import com.amsidh.mvc.SpringBootEmailQuartzScheduler.job.EmailJob.EmailJob;
-import com.amsidh.mvc.SpringBootEmailQuartzScheduler.payload.EmailRequest;
-import com.amsidh.mvc.SpringBootEmailQuartzScheduler.payload.EmailResponse;
+import com.amsidh.mvc.app.jobs.EmailJob;
+import com.amsidh.mvc.app.payload.JobRequest;
+import com.amsidh.mvc.app.payload.JobResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.quartz.JobBuilder;
-import org.quartz.JobDataMap;
-import org.quartz.JobDetail;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.SimpleScheduleBuilder;
-import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
+import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,31 +20,31 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-public class EmailSchedulerController {
+public class SchedulerController {
 
     @Autowired
     private Scheduler scheduler;
 
-    @PostMapping("/schedule/email")
-    public ResponseEntity<EmailResponse> submitJob(@Valid @RequestBody EmailRequest emailRequest) {
+    @PostMapping("/schedule/submitJob")
+    public ResponseEntity<JobResponse> submitJob(@Valid @RequestBody JobRequest jobRequest) {
         try {
-            ZonedDateTime zonedDateTime = ZonedDateTime.of(emailRequest.getDateTime(), emailRequest.getTimeZone());
+            ZonedDateTime zonedDateTime = ZonedDateTime.of(jobRequest.getDateTime(), jobRequest.getTimeZone());
             if (zonedDateTime.isBefore(ZonedDateTime.now())) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new EmailResponse(false, "dateTime must be after current time"));
+                        .body(new JobResponse(false, "dateTime must be after current time"));
             }
 
-            JobDetail emailJobDetail = buildJobDetail(emailRequest);
-            Trigger emailTrigger = buildTrigger(emailJobDetail, zonedDateTime);
-            scheduler.scheduleJob(emailJobDetail, emailTrigger);
+            JobDetail jobDetail = buildJobDetail(jobRequest);
+            Trigger jobTrigger = buildTrigger(jobDetail, zonedDateTime);
+            scheduler.scheduleJob(jobDetail, jobTrigger);
 
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(new EmailResponse(true, "Email Scheduled Successfully!", emailJobDetail.getKey().getName(), emailJobDetail.getKey().getGroup()));
+                    .body(new JobResponse(true, "Email Scheduled Successfully!", jobDetail.getKey().getName(), jobDetail.getKey().getGroup()));
 
         } catch (SchedulerException schedulerException) {
             log.error("Error while scheduling email: ", schedulerException);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new EmailResponse(false, "Error while scheduling email. Please try again later!"));
+                    .body(new JobResponse(false, "Error while scheduling email. Please try again later!"));
         }
     }
 
@@ -61,11 +54,11 @@ public class EmailSchedulerController {
         return ResponseEntity.ok("Email Scheduler Service Working");
     }
 
-    private JobDetail buildJobDetail(EmailRequest emailRequest) {
+    private JobDetail buildJobDetail(JobRequest jobRequest) {
         JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put("email", emailRequest.getEmail());
-        jobDataMap.put("subject", emailRequest.getSubject());
-        jobDataMap.put("body", emailRequest.getBody());
+        jobDataMap.put("email", jobRequest.getEmail());
+        jobDataMap.put("subject", jobRequest.getSubject());
+        jobDataMap.put("body", jobRequest.getBody());
 
         return JobBuilder.newJob(EmailJob.class)
                 .withIdentity(UUID.randomUUID().toString(), "email-jobs-group")
@@ -82,7 +75,8 @@ public class EmailSchedulerController {
                 .withDescription("Send Email Trigger")
                 .startAt(Date.from(startAt.toInstant()))
                 .forJob(jobDetail)
-                .withSchedule(SimpleScheduleBuilder.simpleSchedule().withMisfireHandlingInstructionFireNow())
+                //.withSchedule(SimpleScheduleBuilder.simpleSchedule().withMisfireHandlingInstructionFireNow())
+                .withSchedule(CronScheduleBuilder.cronSchedule("0 * * * * ?"))
                 .build();
     }
 
